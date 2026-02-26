@@ -518,8 +518,8 @@
         <div class="header-frame">╔══════════════════════════════════════════════════════════╗</div>
         <div class="header-title">☠ OBLITERATOR ☠</div>
         <div class="header-sub">══╡ COMMAND CENTER v1.0╞══</div>
-        <div class="header-info">[ Rust C2 Engine ] · [ OSINT Scanner ] · [ Proxy Exploit ] · [ <span class="blink"
-                style="color:var(--phosphor)">●</span> ONLINE ]</div>
+        <div class="header-info">[ 7 Engines ] · [ GitHub Search ] · [ OSINT ] · [ GitLab ] · [ Gists ] · [ <span
+                class="blink" style="color:var(--phosphor)">●</span> ONLINE ]</div>
         <div class="header-frame">╚══════════════════════════════════════════════════════════╝</div>
     </div>
 
@@ -544,10 +544,10 @@
     </div>
 
     <div class="grid-2col">
-        <!-- LEFT: SCANNER -->
+        <!-- LEFT: VALID KEYS PANEL -->
         <div class="win-frame">
             <div class="win-titlebar">
-                <span>mass_scanner.exe</span>
+                <span>💎 valid_keys.db — LIVE CAPTURES</span>
                 <div class="win-btns">
                     <div class="win-btn">_</div>
                     <div class="win-btn">□</div>
@@ -555,22 +555,25 @@
                 </div>
             </div>
             <div class="win-body">
-                <div style="margin-bottom: 8px; color: var(--text-dim)">C:\OBLITERATOR&gt; <span
-                        style="color: var(--phosphor)">Paste API keys below for mass validation_<span
-                            class="blink">▌</span></span></div>
-                <textarea id="keysInput" rows="7"
-                    placeholder="sk-ant...&#10;AIzaSy...&#10;sk-proj...&#10;hf_..."></textarea>
-                <div style="margin-top: 8px;">
-                    <button class="btn-retro" id="checkBtn" onclick="checkKeys()">[ EXECUTE SCAN ]</button>
+                <div style="color: var(--text-dim); margin-bottom: 8px;">C:\OBLITERATOR&gt; <span
+                        style="color: var(--phosphor)">Valid / Working keys appear here automatically</span></div>
+                <div id="valid-keys-list" style="max-height: 280px; overflow-y: auto;">
+                    <div style="color: var(--text-dim); text-align: center; padding: 30px 0;">
+                        [ SCANNING FOR VALID KEYS... ]<br>
+                        <span style="font-size:14px; color: var(--amber)">7 engines running in parallel</span>
+                    </div>
                 </div>
-                <div id="results" style="margin-top: 10px;"></div>
+                <div style="margin-top: 8px; color: var(--text-dim); font-size: 14px;">
+                    <span class="blink" style="color: var(--phosphor);">●</span> Click <span
+                        style="color: var(--amber)">INJECT&gt;&gt;</span> to load key into prompt shell
+                </div>
             </div>
         </div>
 
         <!-- RIGHT: LIVE SHELL -->
         <div class="win-frame">
             <div class="win-titlebar">
-                <span>target_shell.exe</span>
+                <span>prompt_shell.exe</span>
                 <div class="win-btns">
                     <div class="win-btn">_</div>
                     <div class="win-btn">□</div>
@@ -635,13 +638,12 @@
                             <th>TIME</th>
                             <th>PROVIDER</th>
                             <th>STATUS</th>
-                            <th>API KEY</th>
-                            <th>ACTION</th>
+                            <th>API KEY (click to copy)</th>
                         </tr>
                     </thead>
                     <tbody id="loot-body">
                         <tr>
-                            <td colspan="5" style="text-align:center; color:var(--text-dim)">Initializing database
+                            <td colspan="4" style="text-align:center; color:var(--text-dim)">Initializing database
                                 sync...</td>
                         </tr>
                     </tbody>
@@ -652,7 +654,7 @@
 
     <!-- STATUS BAR -->
     <div class="statusbar">
-        <div class="statusbar-section" id="sb-status">■ Engine Running</div>
+        <div class="statusbar-section" id="sb-status">■ 7 Engines Running</div>
         <div class="statusbar-section" id="sb-db">DB: harvester.db</div>
         <div class="statusbar-section" id="sb-time"></div>
     </div>
@@ -671,55 +673,6 @@
             document.getElementById('uptime').innerText = `${h}:${m}:${s}`;
             document.getElementById('sb-time').innerText = new Date().toLocaleTimeString();
         }, 1000);
-
-        async function checkKeys() {
-            const btn = document.getElementById("checkBtn");
-            const keys = document.getElementById("keysInput").value;
-            const resultsDiv = document.getElementById("results");
-            if (!keys.trim()) return;
-
-            btn.disabled = true;
-            btn.innerText = "[ SCANNING... ]";
-            resultsDiv.innerHTML = "";
-
-            try {
-                const body = new URLSearchParams();
-                body.append("keys", keys);
-                const response = await fetch("/check", { method: "POST", body: body });
-                const data = await response.json();
-
-                if (data.results && data.results.length > 0) {
-                    data.results.forEach(res => {
-                        const statusClass = res.status.replace(" ", "-");
-                        const card = document.createElement("div");
-                        card.className = `result-card ${statusClass}`;
-
-                        let interactBtnHtml = "";
-                        const supportedShells = ["OpenAI", "Anthropic", "GoogleAI", "Groq", "DeepSeek", "OpenRouter"];
-                        if (statusClass === "VALID" && supportedShells.includes(res.provider)) {
-                            interactBtnHtml = `<button class="btn-retro btn-sm btn-green" onclick="loadTarget('${res.key}', '${res.provider}')">INJECT >></button>`;
-                        }
-
-                        card.innerHTML = `
-                        <div class="row-top">
-                            <span class="provider-tag ${res.provider}">${res.provider}</span>
-                            <span class="status-${statusClass === 'DEAD' ? 'dead' : statusClass === 'VALID' ? 'valid' : 'warn'}">[${res.status}]</span>
-                        </div>
-                        <div class="key-text">${res.key}</div>
-                        <div class="row-top">
-                            <span style="color:var(--text-dim)">► ${res.message}</span>
-                            ${interactBtnHtml}
-                        </div>
-                    `;
-                        resultsDiv.appendChild(card);
-                    });
-                }
-            } catch (e) { alert("Backend Error!"); }
-            finally {
-                btn.disabled = false;
-                btn.innerText = "[ EXECUTE SCAN ]";
-            }
-        }
 
         function loadTarget(key, provider) {
             __activeKey = key;
@@ -774,7 +727,7 @@
             }
         }
 
-        // ===== LOOT TABLE =====
+        // ===== LOOT TABLE + VALID KEYS =====
         let lootPage = 0;
         const LOOT_PER_PAGE = 20;
 
@@ -788,10 +741,37 @@
                 const lootRes = await fetch('/api/loot');
                 const allLoot = await lootRes.json();
 
+                // ===== VALID KEYS PANEL =====
+                const validKeys = allLoot.filter(k => k.status !== 'DEAD' && k.status !== 'ERROR');
+                const validDiv = document.getElementById('valid-keys-list');
+                if (validKeys.length > 0) {
+                    validDiv.innerHTML = '';
+                    validKeys.forEach(row => {
+                        let displayKey = row.api_key.length > 40 ? row.api_key.substring(0, 18) + '...' + row.api_key.slice(-8) : row.api_key;
+                        let statusColor = row.status === 'VALID' ? 'var(--phosphor)' : 'var(--amber)';
+                        let statusIcon = row.status === 'VALID' ? '✅' : '⚠️';
+                        validDiv.innerHTML += `
+                        <div style="background:#0a1a0a; border:1px solid #1a4a1a; padding:8px 10px; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                            <div>
+                                <span class="provider-tag ${row.provider}">${row.provider}</span>
+                                <span style="color:${statusColor}; margin-left:8px;">${statusIcon} ${row.status}</span>
+                                <span style="color:#888; margin-left:8px; font-size:14px;">${row.message}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="color:#aaa; font-size:14px; cursor:pointer;" title="${escapeHTML(row.api_key)}" onclick="navigator.clipboard.writeText('${row.api_key}')">${escapeHTML(displayKey)}</span>
+                                <button class="btn-retro btn-sm btn-green" onclick="loadTarget('${row.api_key}', '${row.provider}')">INJECT&gt;&gt;</button>
+                            </div>
+                        </div>`;
+                    });
+                } else {
+                    validDiv.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 30px 0;">[ NO VALID KEYS YET ]<br><span style="font-size:14px; color: var(--amber)">7 engines scanning... valid keys appear here automatically</span></div>';
+                }
+
+                // ===== ALL KEYS TABLE =====
                 const totalPages = Math.max(1, Math.ceil(allLoot.length / LOOT_PER_PAGE));
                 if (lootPage >= totalPages) lootPage = totalPages - 1;
                 document.getElementById('page-info').innerText = `Page ${lootPage + 1}/${totalPages} (${allLoot.length} records)`;
-                document.getElementById('sb-db').innerText = `DB: ${allLoot.length} keys`;
+                document.getElementById('sb-db').innerText = `DB: ${allLoot.length} keys | ${validKeys.length} valid`;
 
                 const start = lootPage * LOOT_PER_PAGE;
                 const loot = allLoot.slice(start, start + LOOT_PER_PAGE);
@@ -801,58 +781,21 @@
                     lootBody.innerHTML = '';
                     loot.forEach(row => {
                         let sc = row.status === 'VALID' ? 'valid' : (row.status === 'DEAD' ? 'dead' : 'warn');
-                        let icon = row.status === 'VALID' ? '■' : (row.status === 'DEAD' ? '×' : '!');
-                        let displayKey = row.api_key.length > 40 ? row.api_key.substring(0, 18) + '...' + row.api_key.slice(-8) : row.api_key;
+                        let icon = row.status === 'VALID' ? '✅' : (row.status === 'DEAD' ? '❌' : '⚠️');
+                        let displayKey = row.api_key.length > 50 ? row.api_key.substring(0, 22) + '...' + row.api_key.slice(-8) : row.api_key;
                         lootBody.innerHTML += `
                         <tr>
                             <td style="color:var(--text-dim); font-size:14px; white-space:nowrap;">${row.timestamp}</td>
                             <td><span class="provider-tag ${row.provider}">${row.provider}</span></td>
-                            <td class="status-${sc}" id="status-${row.id}">[${icon}] ${row.status}</td>
+                            <td class="status-${sc}">${icon} ${row.status}</td>
                             <td style="color:#aaa; font-size:15px; cursor:pointer;" title="${escapeHTML(row.api_key)}" onclick="navigator.clipboard.writeText('${row.api_key}')">${escapeHTML(displayKey)}</td>
-                            <td><button class="btn-retro btn-sm" id="btn-${row.id}" onclick="recheckKey('${escapeHTML(row.api_key)}', ${row.id})">CHECK</button></td>
                         </tr>
                     `;
                     });
                 } else if (allLoot.length === 0) {
-                    lootBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim)">No data.</td></tr>';
+                    lootBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-dim)">Waiting for first harvest...</td></tr>';
                 }
             } catch (e) { console.error("Sync err:", e); }
-        }
-
-        async function recheckKey(apiKey, rowId) {
-            const btn = document.getElementById('btn-' + rowId);
-            const statusCell = document.getElementById('status-' + rowId);
-            if (!btn || !statusCell) return;
-
-            btn.disabled = true;
-            btn.innerText = '...';
-            statusCell.innerText = 'CHECKING';
-            statusCell.className = '';
-            statusCell.style.color = 'var(--text-dim)';
-
-            try {
-                const body = new URLSearchParams();
-                body.append('keys', apiKey);
-                const response = await fetch('/check', { method: 'POST', body: body });
-                const data = await response.json();
-
-                if (data.results && data.results.length > 0) {
-                    const res = data.results[0];
-                    let sc = res.status === 'VALID' ? 'valid' : (res.status === 'DEAD' ? 'dead' : 'warn');
-                    let icon = res.status === 'VALID' ? '■' : (res.status === 'DEAD' ? '×' : '!');
-                    statusCell.className = `status-${sc}`;
-                    statusCell.style.color = '';
-                    statusCell.innerText = `[${icon}] ${res.status}`;
-                    btn.innerText = 'DONE';
-                } else {
-                    statusCell.innerText = '? UNKNOWN';
-                    btn.innerText = 'RETRY';
-                }
-            } catch (e) {
-                statusCell.innerText = 'ERR';
-                statusCell.style.color = 'var(--red)';
-                btn.innerText = 'RETRY';
-            } finally { btn.disabled = false; }
         }
 
         setInterval(fetchHarvesterData, 5000);

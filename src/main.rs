@@ -91,7 +91,15 @@ async fn validate_key(client: &Client, provider: &str, key: &str) -> (String, St
                 return ("DEAD".to_string(), "Invalid".to_string());
             }
         }
-        _ => return ("VALID".to_string(), "Unvalidated (Rust)".to_string()),
+        "HuggingFace" => {
+            if let Ok(resp) = client.get("https://huggingface.co/api/whoami-v2")
+                .header("Authorization", format!("Bearer {}", key))
+                .send().await {
+                if resp.status().is_success() { return ("VALID".to_string(), "Working!".to_string()); }
+                return ("DEAD".to_string(), "Invalid".to_string());
+            }
+        }
+        _ => return ("DEAD".to_string(), "Unknown Provider".to_string()),
     }
     ("ERROR".to_string(), "Network Fail".to_string())
 }

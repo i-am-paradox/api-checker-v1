@@ -349,9 +349,25 @@ async fn api_logs() -> Html<String> {
         Html("Waiting for system logs...".to_string())
     }
 }
+// ===== LAYER 5: AUTHOR WATERMARK (compiled into binary) =====
+const AUTHOR: &str = "i-am-paradox";
+const AUTHOR_GITHUB: &str = "https://github.com/i-am-paradox";
+const PROJECT_NAME: &str = "API Checker v1.0";
+
+async fn api_author() -> Json<Value> {
+    Json(json!({"author": AUTHOR, "github": AUTHOR_GITHUB, "project": PROJECT_NAME, "license": "MIT"}))
+}
 
 #[tokio::main]
 async fn main() {
+    // Layer 5: Startup banner with embedded author
+    println!("╔══════════════════════════════════════════════════════════╗");
+    println!("║   ☠  API CHECKER v1.0 — COMMAND CENTER                 ║");
+    println!("║   Created by: {}                             ║", AUTHOR);
+    println!("║   GitHub: {} ║", AUTHOR_GITHUB);
+    println!("║   License: MIT — Original authorship must be retained  ║");
+    println!("╚══════════════════════════════════════════════════════════╝");
+
     init_db();
 
     let state = Arc::new(AppState {
@@ -375,9 +391,17 @@ async fn main() {
         .route("/api/stats", get(api_stats))
         .route("/api/loot", get(api_loot))
         .route("/api/logs", get(api_logs))
+        .route("/api/author", get(api_author))
         .route("/check", post(run_check))
         .route("/test_prompt", post(test_prompt))
-        .with_state(state);
+        .with_state(state)
+        // Layer 3: Inject X-Author header into EVERY HTTP response
+        .layer(axum::middleware::from_fn(|req: axum::http::Request<axum::body::Body>, next: axum::middleware::Next| async move {
+            let mut response = next.run(req).await;
+            response.headers_mut().insert("X-Author", "i-am-paradox".parse().unwrap());
+            response.headers_mut().insert("X-GitHub", "https://github.com/i-am-paradox".parse().unwrap());
+            response
+        }));
 
     println!("[+] Unified Native RUST C2 Core Online => http://0.0.0.0:5050");
     let listener = tokio::net::TcpListener::bind("0.0.0.0:5050").await.unwrap();

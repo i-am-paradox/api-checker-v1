@@ -866,6 +866,53 @@
         }
         setInterval(fetchMatrixLogs, 1500);
         fetchMatrixLogs();
+
+        // ===== LAYER 1: VISIBLE AUTHOR BADGE =====
+        (function () {
+            const _0x = atob('aS1hbS1wYXJhZG94'); // "i-am-paradox"
+            const _0g = atob('aHR0cHM6Ly9naXRodWIuY29tL2ktYW0tcGFyYWRveA=='); // github URL
+
+            function _createBadge() {
+                if (document.getElementById('_watermark_badge')) return;
+                const d = document.createElement('div');
+                d.id = '_watermark_badge';
+                d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#000;border-top:2px solid #333;padding:4px 0;text-align:center;z-index:99999;font-family:"Press Start 2P","VT323",monospace;font-size:9px;letter-spacing:1px;';
+                d.innerHTML = '<span style="color:#555">CREATED BY </span><a href="' + _0g + '" target="_blank" style="color:#33ff33;text-decoration:none">' + _0x.toUpperCase() + '</a><span style="color:#555"> | </span><span style="color:#444">OPEN SOURCE • MIT LICENSE</span>';
+                document.body.appendChild(d);
+            }
+
+            // ===== LAYER 2: SELF-HEALING ANTI-TAMPER =====
+            _createBadge();
+            // Re-check every 3 seconds
+            setInterval(_createBadge, 3000);
+
+            // MutationObserver: if anyone removes the badge from DOM, recreate it
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    mutation.removedNodes.forEach(function (node) {
+                        if (node.id === '_watermark_badge') {
+                            setTimeout(_createBadge, 100);
+                        }
+                    });
+                });
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            // ===== LAYER 4: CONSOLE BRANDING =====
+            console.log('%c ☠ API CHECKER v1.0 ☠ ', 'background:#000;color:#33ff33;font-size:20px;font-weight:bold;padding:10px 20px;');
+            console.log('%c Created by: ' + _0x, 'color:#ffb000;font-size:14px;font-weight:bold;');
+            console.log('%c ' + _0g, 'color:#888;font-size:11px;');
+            console.log('%c Removing watermarks violates the MIT license attribution clause.', 'color:#ff3333;font-size:11px;');
+
+            // Hidden: inject author into page title
+            const _origTitle = document.title;
+            document.title = _origTitle + ' | by ' + _0x;
+
+            // Fetch author from backend for double-verification
+            fetch('/api/author').then(r => r.json()).then(d => {
+                if (d.author) window.__author = d.author;
+            }).catch(() => { });
+        })();
     </script>
 </body>
 

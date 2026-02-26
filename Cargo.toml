@@ -1,0 +1,15 @@
+[package]
+name = "obliterator_rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7.5"
+tokio = { version = "1.37", features = ["full", "time", "macros"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls-native-roots"] }
+regex = "1.10.4"
+rusqlite = { version = "0.31", features = ["bundled"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tower-http = { version = "0.5", features = ["fs", "cors", "trace"] }
+futures = "0.3.30"

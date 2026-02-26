@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBLITERATOR v3.1 — Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --phosphor: #33ff33;
+            --phosphor-dim: #1a8c1a;
+            --amber: #ffb000;
+            --red: #ff3333;
+            --bg: #0a0a0a;
+            --panel: #0d1117;
+            --border-light: #3a3a3a;
+            --border-dark: #1a1a1a;
+            --text-dim: #666;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--phosphor);
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            padding: 10px;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* ===== CRT SCANLINE OVERLAY ===== */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 9999;
+            background: repeating-linear-gradient(0deg,
+                    rgba(0, 0, 0, 0.15) 0px,
+                    rgba(0, 0, 0, 0.15) 1px,
+                    transparent 1px,
+                    transparent 3px);
+        }
+
+        /* CRT flicker */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 9998;
+            background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.4) 100%);
+        }
+
+        /* ===== RETRO WINDOW FRAME ===== */
+        .win-frame {
+            border: 2px solid;
+            border-color: #555 #222 #222 #555;
+            margin-bottom: 12px;
+            background: var(--panel);
+        }
+
+        .win-titlebar {
+            background: linear-gradient(90deg, #000080, #1084d0);
+            padding: 3px 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .win-titlebar span {
+            color: white;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .win-btns {
+            display: flex;
+            gap: 3px;
+        }
+
+        .win-btn {
+            width: 16px;
+            height: 16px;
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #fff #808080 #808080 #fff;
+            font-size: 10px;
+            line-height: 12px;
+            text-align: center;
+            cursor: default;
+            font-family: 'VT323';
+            color: black;
+        }
+
+        .win-body {
+            padding: 10px;
+        }
+
+        /* ===== HEADER ===== */
+        .ascii-header {
+            text-align: center;
+            padding: 18px 0 12px;
+            font-family: 'VT323', monospace;
+        }
+
+        .header-frame {
+            color: var(--phosphor-dim);
+            font-size: 18px;
+            letter-spacing: 2px;
+        }
+
+        .header-title {
+            font-size: 56px;
+            color: var(--phosphor);
+            letter-spacing: 10px;
+            text-shadow: 0 0 20px var(--phosphor-dim), 0 0 40px rgba(51, 255, 51, 0.15);
+            margin: 4px 0;
+        }
+
+        .header-sub {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            color: var(--amber);
+            letter-spacing: 3px;
+            margin: 6px 0 4px;
+        }
+
+        .header-info {
+            color: var(--text-dim);
+            font-size: 16px;
+        }
+
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .glow {
+            text-shadow: 0 0 10px var(--phosphor), 0 0 20px var(--phosphor-dim);
+        }
+
+        /* ===== LAYOUT ===== */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* ===== STATS BAR ===== */
+        .stats-bar {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 12px;
+        }
+
+        .stat-cell {
+            flex: 1;
+            background: #000;
+            border: 1px solid var(--border-light);
+            padding: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-dim);
+            font-family: 'Press Start 2P', monospace;
+            letter-spacing: 0;
+        }
+
+        .stat-num {
+            font-size: 36px;
+            color: var(--phosphor);
+            text-shadow: 0 0 15px var(--phosphor-dim);
+            margin-top: 4px;
+        }
+
+        .stat-num.amber {
+            color: var(--amber);
+            text-shadow: 0 0 15px rgba(255, 176, 0, 0.4);
+        }
+
+        /* ===== FORM ELEMENTS ===== */
+        textarea,
+        input[type="text"] {
+            width: 100%;
+            background: #000;
+            color: var(--phosphor);
+            border: 1px inset #444;
+            padding: 8px;
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            outline: none;
+            resize: vertical;
+        }
+
+        textarea:focus,
+        input:focus {
+            border-color: var(--phosphor);
+            box-shadow: inset 0 0 5px var(--phosphor-dim);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-retro {
+            background: #c0c0c0;
+            color: #000;
+            border: 2px solid;
+            border-color: #fff #808080 #808080 #fff;
+            padding: 6px 16px;
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-retro:hover {
+            background: #d4d4d4;
+        }
+
+        .btn-retro:active {
+            border-color: #808080 #fff #fff #808080;
+            background: #a0a0a0;
+        }
+
+        .btn-retro:disabled {
+            background: #808080;
+            color: #555;
+            cursor: not-allowed;
+        }
+
+        .btn-sm {
+            padding: 2px 8px;
+            font-size: 14px;
+        }
+
+        .btn-green {
+            background: #1a4d1a;
+            color: var(--phosphor);
+            border-color: var(--phosphor) #0a2d0a #0a2d0a var(--phosphor);
+        }
+
+        .btn-green:hover {
+            background: #226622;
+        }
+
+        /* ===== TERMINAL BOX ===== */
+        .terminal-box {
+            background: #000;
+            color: var(--phosphor);
+            border: 1px inset #444;
+            padding: 10px;
+            font-family: 'VT323', monospace;
+            font-size: 16px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.3;
+        }
+
+        /* ===== LOOT TABLE ===== */
+        .loot-wrap {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px inset #444;
+        }
+
+        .loot-wrap::-webkit-scrollbar {
+            width: 16px;
+        }
+
+        .loot-wrap::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border: 1px solid #333;
+        }
+
+        .loot-wrap::-webkit-scrollbar-thumb {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #fff #808080 #808080 #fff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 16px;
+        }
+
+        th {
+            background: #000080;
+            color: #fff;
+            padding: 6px 8px;
+            text-align: left;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 9px;
+            letter-spacing: 1px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        td {
+            padding: 5px 8px;
+            border-bottom: 1px solid #1a1a1a;
+            color: var(--phosphor);
+        }
+
+        tr:hover td {
+            background: #0a1a0a;
+        }
+
+        .provider-tag {
+            display: inline-block;
+            padding: 1px 6px;
+            font-size: 13px;
+            font-family: 'Press Start 2P', monospace;
+            border: 1px solid;
+        }
+
+        .provider-tag.OpenAI {
+            color: #20b2aa;
+            border-color: #20b2aa;
+        }
+
+        .provider-tag.Anthropic {
+            color: #b39ddb;
+            border-color: #b39ddb;
+        }
+
+        .provider-tag.GoogleAI {
+            color: #4285F4;
+            border-color: #4285F4;
+        }
+
+        .provider-tag.HuggingFace {
+            color: #FFD21E;
+            border-color: #FFD21E;
+        }
+
+        .status-valid {
+            color: var(--phosphor);
+        }
+
+        .status-dead {
+            color: var(--red);
+        }
+
+        .status-warn {
+            color: var(--amber);
+        }
+
+        /* ===== PAGINATION ===== */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+
+        .page-info {
+            color: var(--text-dim);
+            font-size: 15px;
+        }
+
+        /* ===== RESULT CARDS ===== */
+        #results {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .result-card {
+            background: #000;
+            border-left: 3px solid var(--border-light);
+            padding: 8px;
+        }
+
+        .result-card.VALID {
+            border-color: var(--phosphor);
+        }
+
+        .result-card.DEAD {
+            border-color: var(--red);
+            opacity: 0.7;
+        }
+
+        .result-card.ZERO-CREDITS,
+        .result-card.QUOTA-EXCEEDED {
+            border-color: var(--amber);
+        }
+
+        .row-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .key-text {
+            background: #0a0a0a;
+            padding: 3px 6px;
+            margin: 4px 0;
+            color: #aaa;
+            word-break: break-all;
+            font-size: 15px;
+        }
+
+        /* ===== CHAT ===== */
+        #chat-history {
+            background: #000;
+            border: 1px inset #444;
+            padding: 10px;
+            overflow-y: auto;
+            min-height: 200px;
+            max-height: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .msg {
+            padding: 6px;
+            max-width: 80%;
+            line-height: 1.3;
+        }
+
+        .msg.user {
+            background: #1a1a2e;
+            align-self: flex-end;
+            border-right: 2px solid var(--phosphor);
+        }
+
+        .msg.bot {
+            background: #0d0d17;
+            align-self: flex-start;
+            border-left: 2px solid #5c6bc0;
+        }
+
+        .msg.error {
+            background: #2a0000;
+            color: var(--red);
+            border-left: 2px solid var(--red);
+        }
+
+        .chat-tools {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .chat-tools input {
+            flex: 1;
+        }
+
+        /* ===== STATUS BAR (bottom) ===== */
+        .statusbar {
+            background: #c0c0c0;
+            color: #000;
+            padding: 3px 8px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            border-top: 2px solid;
+            border-color: #fff #808080 #808080 #fff;
+            margin-top: 12px;
+            font-family: 'VT323', monospace;
+        }
+
+        .statusbar-section {
+            border: 1px solid;
+            border-color: #808080 #fff #fff #808080;
+            padding: 1px 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div class="ascii-header">
+        <div class="header-frame">╔══════════════════════════════════════════════════════════╗</div>
+        <div class="header-title">☠ OBLITERATOR ☠</div>
+        <div class="header-sub">══╡ COMMAND CENTER v1.0╞══</div>
+        <div class="header-info">[ Rust C2 Engine ] · [ OSINT Scanner ] · [ Proxy Exploit ] · [ <span class="blink"
+                style="color:var(--phosphor)">●</span> ONLINE ]</div>
+        <div class="header-frame">╚══════════════════════════════════════════════════════════╝</div>
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+        <div class="stat-cell">
+            <div class="stat-label">KEYS HARVESTED</div>
+            <div class="stat-num" id="stat-total">0</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-label">LIVING KEYS</div>
+            <div class="stat-num amber" id="stat-living">0</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-label">ENGINE STATUS</div>
+            <div class="stat-num" style="font-size: 22px; margin-top: 10px;"><span class="blink">►</span> ACTIVE</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-label">UPTIME</div>
+            <div class="stat-num" style="font-size: 22px; margin-top: 10px;" id="uptime">00:00:00</div>
+        </div>
+    </div>
+
+    <div class="grid-2col">
+        <!-- LEFT: SCANNER -->
+        <div class="win-frame">
+            <div class="win-titlebar">
+                <span>mass_scanner.exe</span>
+                <div class="win-btns">
+                    <div class="win-btn">_</div>
+                    <div class="win-btn">□</div>
+                    <div class="win-btn">×</div>
+                </div>
+            </div>
+            <div class="win-body">
+                <div style="margin-bottom: 8px; color: var(--text-dim)">C:\OBLITERATOR&gt; <span
+                        style="color: var(--phosphor)">Paste API keys below for mass validation_<span
+                            class="blink">▌</span></span></div>
+                <textarea id="keysInput" rows="7"
+                    placeholder="sk-ant...&#10;AIzaSy...&#10;sk-proj...&#10;hf_..."></textarea>
+                <div style="margin-top: 8px;">
+                    <button class="btn-retro" id="checkBtn" onclick="checkKeys()">[ EXECUTE SCAN ]</button>
+                </div>
+                <div id="results" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+
+        <!-- RIGHT: LIVE SHELL -->
+        <div class="win-frame">
+            <div class="win-titlebar">
+                <span>target_shell.exe</span>
+                <div class="win-btns">
+                    <div class="win-btn">_</div>
+                    <div class="win-btn">□</div>
+                    <div class="win-btn">×</div>
+                </div>
+            </div>
+            <div class="win-body">
+                <div style="color: var(--text-dim); margin-bottom: 6px;" id="active-info">C:\SHELL&gt; <span
+                        style="color:var(--amber)">Load a VALID key to interact_</span></div>
+                <div id="chat-history">
+                    <div style="color: var(--text-dim); text-align: center; margin: auto;">[ AWAITING VALID CREDENTIALS
+                        ]</div>
+                </div>
+                <div class="chat-tools">
+                    <input type="text" id="promptInput" placeholder="Enter prompt..." disabled
+                        onkeypress="handleEnter(event)">
+                    <button class="btn-retro btn-green" id="sendBtn" onclick="sendPrompt()" disabled>SEND>></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SYSTEM MATRIX TERMINAL -->
+    <div class="win-frame">
+        <div class="win-titlebar">
+            <span>system_matrix.log</span>
+            <div class="win-btns">
+                <div class="win-btn">_</div>
+                <div class="win-btn">□</div>
+                <div class="win-btn">×</div>
+            </div>
+        </div>
+        <div class="win-body" style="padding: 0;">
+            <pre id="matrix-terminal" class="terminal-box"
+                style="height: 200px; margin: 0;">Awaiting system connection...</pre>
+        </div>
+    </div>
+
+    <!-- HARVESTED LOOT TABLE -->
+    <div class="win-frame">
+        <div class="win-titlebar">
+            <span>harvested_loot.db</span>
+            <div class="win-btns">
+                <div class="win-btn">_</div>
+                <div class="win-btn">□</div>
+                <div class="win-btn">×</div>
+            </div>
+        </div>
+        <div class="win-body">
+            <div class="pagination">
+                <div>
+                    <button class="btn-retro btn-sm"
+                        onclick="lootPage = Math.max(0, lootPage - 1); fetchHarvesterData();">◄ PREV</button>
+                    <button class="btn-retro btn-sm" onclick="lootPage++; fetchHarvesterData();">NEXT ►</button>
+                </div>
+                <div class="page-info" id="page-info">Page 1</div>
+            </div>
+            <div class="loot-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TIME</th>
+                            <th>PROVIDER</th>
+                            <th>STATUS</th>
+                            <th>API KEY</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="loot-body">
+                        <tr>
+                            <td colspan="5" style="text-align:center; color:var(--text-dim)">Initializing database
+                                sync...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="statusbar">
+        <div class="statusbar-section" id="sb-status">■ Engine Running</div>
+        <div class="statusbar-section" id="sb-db">DB: harvester.db</div>
+        <div class="statusbar-section" id="sb-time"></div>
+    </div>
+
+    <script>
+        let __activeKey = null;
+        let __activeProvider = null;
+        const startTime = Date.now();
+
+        // Uptime counter
+        setInterval(() => {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+            const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+            const s = String(elapsed % 60).padStart(2, '0');
+            document.getElementById('uptime').innerText = `${h}:${m}:${s}`;
+            document.getElementById('sb-time').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+
+        async function checkKeys() {
+            const btn = document.getElementById("checkBtn");
+            const keys = document.getElementById("keysInput").value;
+            const resultsDiv = document.getElementById("results");
+            if (!keys.trim()) return;
+
+            btn.disabled = true;
+            btn.innerText = "[ SCANNING... ]";
+            resultsDiv.innerHTML = "";
+
+            try {
+                const body = new URLSearchParams();
+                body.append("keys", keys);
+                const response = await fetch("/check", { method: "POST", body: body });
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(res => {
+                        const statusClass = res.status.replace(" ", "-");
+                        const card = document.createElement("div");
+                        card.className = `result-card ${statusClass}`;
+
+                        let interactBtnHtml = "";
+                        const supportedShells = ["OpenAI", "Anthropic", "GoogleAI", "Groq", "DeepSeek", "OpenRouter"];
+                        if (statusClass === "VALID" && supportedShells.includes(res.provider)) {
+                            interactBtnHtml = `<button class="btn-retro btn-sm btn-green" onclick="loadTarget('${res.key}', '${res.provider}')">INJECT >></button>`;
+                        }
+
+                        card.innerHTML = `
+                        <div class="row-top">
+                            <span class="provider-tag ${res.provider}">${res.provider}</span>
+                            <span class="status-${statusClass === 'DEAD' ? 'dead' : statusClass === 'VALID' ? 'valid' : 'warn'}">[${res.status}]</span>
+                        </div>
+                        <div class="key-text">${res.key}</div>
+                        <div class="row-top">
+                            <span style="color:var(--text-dim)">► ${res.message}</span>
+                            ${interactBtnHtml}
+                        </div>
+                    `;
+                        resultsDiv.appendChild(card);
+                    });
+                }
+            } catch (e) { alert("Backend Error!"); }
+            finally {
+                btn.disabled = false;
+                btn.innerText = "[ EXECUTE SCAN ]";
+            }
+        }
+
+        function loadTarget(key, provider) {
+            __activeKey = key;
+            __activeProvider = provider;
+            document.getElementById("active-info").innerHTML = `C:\\SHELL&gt; Target: <span style="color:var(--phosphor)">${provider}</span> | Key: ${key.substring(0, 10)}...${key.slice(-5)}`;
+            const chat = document.getElementById("chat-history");
+            chat.innerHTML = `<div style="text-align:center; color: var(--phosphor); margin: 20px 0;">[ CONNECTED TO ${provider.toUpperCase()} API ]<br>Ready for input_<span class="blink">▌</span></div>`;
+            document.getElementById("promptInput").disabled = false;
+            document.getElementById("sendBtn").disabled = false;
+            document.getElementById("promptInput").focus();
+        }
+
+        function handleEnter(e) { if (e.key === 'Enter') sendPrompt(); }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag]));
+        }
+
+        async function sendPrompt() {
+            if (!__activeKey || !__activeProvider) return;
+            const inputField = document.getElementById("promptInput");
+            const btn = document.getElementById("sendBtn");
+            const chat = document.getElementById("chat-history");
+            const prompt = inputField.value.trim();
+            if (!prompt) return;
+
+            chat.innerHTML += `<div class="msg user">${escapeHTML(prompt)}</div>`;
+            chat.scrollTop = chat.scrollHeight;
+            inputField.value = "";
+            inputField.disabled = true;
+            btn.disabled = true;
+
+            try {
+                const response = await fetch("/test_prompt", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ key: __activeKey, provider: __activeProvider, prompt: prompt })
+                });
+                const data = await response.json();
+                if (data.response) {
+                    chat.innerHTML += `<div class="msg bot"><strong style="color:#5c6bc0;">[${__activeProvider}]</strong><br>${escapeHTML(data.response).replace(/\\n/g, '<br>')}</div>`;
+                } else if (data.error) {
+                    chat.innerHTML += `<div class="msg error"><strong>ERR:</strong> ${escapeHTML(data.error)}</div>`;
+                }
+            } catch (e) {
+                chat.innerHTML += `<div class="msg error"><strong>FAULT:</strong> Connection failed.</div>`;
+            } finally {
+                inputField.disabled = false;
+                btn.disabled = false;
+                chat.scrollTop = chat.scrollHeight;
+                inputField.focus();
+            }
+        }
+
+        // ===== LOOT TABLE =====
+        let lootPage = 0;
+        const LOOT_PER_PAGE = 20;
+
+        async function fetchHarvesterData() {
+            try {
+                const statsRes = await fetch('/api/stats');
+                const stats = await statsRes.json();
+                document.getElementById('stat-total').innerText = stats.total || 0;
+                document.getElementById('stat-living').innerText = stats.living || 0;
+
+                const lootRes = await fetch('/api/loot');
+                const allLoot = await lootRes.json();
+
+                const totalPages = Math.max(1, Math.ceil(allLoot.length / LOOT_PER_PAGE));
+                if (lootPage >= totalPages) lootPage = totalPages - 1;
+                document.getElementById('page-info').innerText = `Page ${lootPage + 1}/${totalPages} (${allLoot.length} records)`;
+                document.getElementById('sb-db').innerText = `DB: ${allLoot.length} keys`;
+
+                const start = lootPage * LOOT_PER_PAGE;
+                const loot = allLoot.slice(start, start + LOOT_PER_PAGE);
+
+                const lootBody = document.getElementById('loot-body');
+                if (loot && loot.length > 0) {
+                    lootBody.innerHTML = '';
+                    loot.forEach(row => {
+                        let sc = row.status === 'VALID' ? 'valid' : (row.status === 'DEAD' ? 'dead' : 'warn');
+                        let icon = row.status === 'VALID' ? '■' : (row.status === 'DEAD' ? '×' : '!');
+                        let displayKey = row.api_key.length > 40 ? row.api_key.substring(0, 18) + '...' + row.api_key.slice(-8) : row.api_key;
+                        lootBody.innerHTML += `
+                        <tr>
+                            <td style="color:var(--text-dim); font-size:14px; white-space:nowrap;">${row.timestamp}</td>
+                            <td><span class="provider-tag ${row.provider}">${row.provider}</span></td>
+                            <td class="status-${sc}" id="status-${row.id}">[${icon}] ${row.status}</td>
+                            <td style="color:#aaa; font-size:15px; cursor:pointer;" title="${escapeHTML(row.api_key)}" onclick="navigator.clipboard.writeText('${row.api_key}')">${escapeHTML(displayKey)}</td>
+                            <td><button class="btn-retro btn-sm" id="btn-${row.id}" onclick="recheckKey('${escapeHTML(row.api_key)}', ${row.id})">CHECK</button></td>
+                        </tr>
+                    `;
+                    });
+                } else if (allLoot.length === 0) {
+                    lootBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim)">No data.</td></tr>';
+                }
+            } catch (e) { console.error("Sync err:", e); }
+        }
+
+        async function recheckKey(apiKey, rowId) {
+            const btn = document.getElementById('btn-' + rowId);
+            const statusCell = document.getElementById('status-' + rowId);
+            if (!btn || !statusCell) return;
+
+            btn.disabled = true;
+            btn.innerText = '...';
+            statusCell.innerText = 'CHECKING';
+            statusCell.className = '';
+            statusCell.style.color = 'var(--text-dim)';
+
+            try {
+                const body = new URLSearchParams();
+                body.append('keys', apiKey);
+                const response = await fetch('/check', { method: 'POST', body: body });
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    const res = data.results[0];
+                    let sc = res.status === 'VALID' ? 'valid' : (res.status === 'DEAD' ? 'dead' : 'warn');
+                    let icon = res.status === 'VALID' ? '■' : (res.status === 'DEAD' ? '×' : '!');
+                    statusCell.className = `status-${sc}`;
+                    statusCell.style.color = '';
+                    statusCell.innerText = `[${icon}] ${res.status}`;
+                    btn.innerText = 'DONE';
+                } else {
+                    statusCell.innerText = '? UNKNOWN';
+                    btn.innerText = 'RETRY';
+                }
+            } catch (e) {
+                statusCell.innerText = 'ERR';
+                statusCell.style.color = 'var(--red)';
+                btn.innerText = 'RETRY';
+            } finally { btn.disabled = false; }
+        }
+
+        setInterval(fetchHarvesterData, 5000);
+        fetchHarvesterData();
+
+        // ===== MATRIX LOG FEED =====
+        async function fetchMatrixLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                const logs = await response.text();
+                const term = document.getElementById('matrix-terminal');
+                const atBottom = term.scrollHeight - term.clientHeight <= term.scrollTop + 50;
+                term.innerText = logs;
+                if (atBottom) term.scrollTop = term.scrollHeight;
+            } catch (e) { console.error("Matrix err:", e); }
+        }
+        setInterval(fetchMatrixLogs, 1500);
+        fetchMatrixLogs();
+    </script>
+</body>
+
+</html>

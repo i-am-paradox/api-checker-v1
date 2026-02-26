@@ -1,0 +1,24 @@
+# Build artifacts
+/target/
+debug/
+release/
+
+# Database
+*.db
+*.db-journal
+
+# Logs
+*.log
+
+# Environment
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -543,108 +543,132 @@
         </div>
     </div>
 
-    <div class="win-frame">
-        <div class="win-titlebar">
-            <span>💎 valid_keys.db — VALID / WORKING KEYS</span>
-            <div class="win-btns">
-                <div class="win-btn">_</div>
-                <div class="win-btn">□</div>
-                <div class="win-btn">×</div>
+    <div class="grid-2col">
+        <div class="win-frame">
+            <div class="win-titlebar">
+                <span>mass_scanner.exe — Manual Test</span>
+                <div class="win-btns">
+                    <div class="win-btn">_</div>
+                    <div class="win-btn">□</div>
+                    <div class="win-btn">×</div>
+                </div>
+            </div>
+            <div class="win-body">
+                <div style="margin-bottom: 8px; color: var(--text-dim)">C:\OBLITERATOR&gt; <span
+                        style="color: var(--phosphor)">Paste API keys below for manual validation_<span
+                            class="blink">▌</span></span></div>
+                <textarea id="keysInput" rows="5"
+                    placeholder="sk-ant...&#10;AIzaSy...&#10;sk-proj...&#10;hf_..."></textarea>
+                <div style="margin-top: 8px;">
+                    <button class="btn-retro" id="checkBtn" onclick="checkKeys()">[ EXECUTE SCAN ]</button>
+                </div>
+                <div id="results" style="margin-top: 10px;"></div>
             </div>
         </div>
-        <div class="win-body" style="padding: 8px 12px;">
-            <div id="valid-keys-list">
-                <div style="color: var(--text-dim); text-align: center; padding: 15px 0;">
-                    <span class="blink" style="color: var(--phosphor);">●</span> Scanning... valid keys appear here
-                    with <span style="color: var(--amber)">INJECT&gt;&gt;</span> buttons
+
+        <div class="win-frame">
+            <div class="win-titlebar">
+                <span>prompt_shell.exe — AI Interaction</span>
+                <div class="win-btns">
+                    <div class="win-btn">_</div>
+                    <div class="win-btn">□</div>
+                    <div class="win-btn">×</div>
+                </div>
+            </div>
+            <div class="win-body">
+                <div style="color: var(--text-dim); margin-bottom: 6px;" id="active-info">C:\SHELL&gt; <span
+                        style="color:var(--amber)">Click INJECT on a valid key to start chatting_</span></div>
+                <div id="chat-history">
+                    <div style="color: var(--text-dim); text-align: center; margin: auto;">[ AWAITING VALID CREDENTIALS ]</div>
+                </div>
+                <div class="chat-tools">
+                    <input type="text" id="promptInput" placeholder="Type your prompt here..." disabled
+                        onkeypress="handleEnter(event)">
+                    <button class="btn-retro btn-green" id="sendBtn" onclick="sendPrompt()" disabled>SEND&gt;&gt;</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="win-frame">
-        <div class="win-titlebar">
-            <span>prompt_shell.exe — AI Interaction</span>
-            <div class="win-btns">
-                <div class="win-btn">_</div>
-                <div class="win-btn">□</div>
-                <div class="win-btn">×</div>
-            </div>
-        </div>
-        <div class="win-body">
-            <div style="color: var(--text-dim); margin-bottom: 6px;" id="active-info">C:\SHELL&gt; <span
-                    style="color:var(--amber)">Click INJECT on a valid key above to start_</span></div>
-            <div id="chat-history" style="min-height: 80px;">
-                <div style="color: var(--text-dim); text-align: center; padding: 20px 0;">[ AWAITING VALID KEY ]
+    <div class="grid-2col" style="align-items: start;">
+        <div>
+            <div class="win-frame">
+                <div class="win-titlebar">
+                    <span>system_matrix.log — 7 ENGINES RUNNING</span>
+                    <div class="win-btns">
+                        <div class="win-btn">_</div>
+                        <div class="win-btn">□</div>
+                        <div class="win-btn">×</div>
+                    </div>
+                </div>
+                <div class="win-body" style="padding: 0;">
+                    <pre id="matrix-terminal" class="terminal-box"
+                        style="height: 200px; margin: 0;">Awaiting system connection...</pre>
                 </div>
             </div>
-            <div class="chat-tools">
-                <input type="text" id="promptInput" placeholder="Type your prompt here..." disabled
-                    onkeypress="handleEnter(event)">
-                <button class="btn-retro btn-green" id="sendBtn" onclick="sendPrompt()" disabled>SEND&gt;&gt;</button>
-            </div>
-        </div>
-    </div>
 
-
-    <!-- SYSTEM MATRIX TERMINAL -->
-    <div class="win-frame">
-        <div class="win-titlebar">
-            <span>system_matrix.log</span>
-            <div class="win-btns">
-                <div class="win-btn">_</div>
-                <div class="win-btn">□</div>
-                <div class="win-btn">×</div>
-            </div>
-        </div>
-        <div class="win-body" style="padding: 0;">
-            <pre id="matrix-terminal" class="terminal-box"
-                style="height: 200px; margin: 0;">Awaiting system connection...</pre>
-        </div>
-    </div>
-
-    <!-- HARVESTED LOOT TABLE -->
-    <div class="win-frame">
-        <div class="win-titlebar">
-            <span>harvested_loot.db</span>
-            <div class="win-btns">
-                <div class="win-btn">_</div>
-                <div class="win-btn">□</div>
-                <div class="win-btn">×</div>
-            </div>
-        </div>
-        <div class="win-body">
-            <div class="pagination">
-                <div>
-                    <button class="btn-retro btn-sm"
-                        onclick="lootPage = Math.max(0, lootPage - 1); fetchHarvesterData();">◄ PREV</button>
-                    <button class="btn-retro btn-sm" onclick="lootPage++; fetchHarvesterData();">NEXT ►</button>
+            <div class="win-frame">
+                <div class="win-titlebar">
+                    <span>harvested_loot.db — ALL KEYS</span>
+                    <div class="win-btns">
+                        <div class="win-btn">_</div>
+                        <div class="win-btn">□</div>
+                        <div class="win-btn">×</div>
+                    </div>
                 </div>
-                <div class="page-info" id="page-info">Page 1</div>
+                <div class="win-body">
+                    <div class="pagination">
+                        <div>
+                            <button class="btn-retro btn-sm"
+                                onclick="lootPage = Math.max(0, lootPage - 1); fetchHarvesterData();">◄ PREV</button>
+                            <button class="btn-retro btn-sm" onclick="lootPage++; fetchHarvesterData();">NEXT ►</button>
+                        </div>
+                        <div class="page-info" id="page-info">Page 1</div>
+                    </div>
+                    <div class="loot-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>TIME</th>
+                                    <th>PROVIDER</th>
+                                    <th>STATUS</th>
+                                    <th>API KEY (click to copy)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="loot-body">
+                                <tr>
+                                    <td colspan="4" style="text-align:center; color:var(--text-dim)">Initializing database sync...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <div class="loot-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>TIME</th>
-                            <th>PROVIDER</th>
-                            <th>STATUS</th>
-                            <th>API KEY (click to copy)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="loot-body">
-                        <tr>
-                            <td colspan="4" style="text-align:center; color:var(--text-dim)">Initializing
-                                database
-                                sync...</td>
-                        </tr>
-                    </tbody>
-                </table>
+        </div>
+
+        <div class="win-frame" style="position: sticky; top: 10px;">
+            <div class="win-titlebar">
+                <span>💎 valid_keys.db — VALID / WORKING KEYS</span>
+                <div class="win-btns">
+                    <div class="win-btn">_</div>
+                    <div class="win-btn">□</div>
+                    <div class="win-btn">×</div>
+                </div>
+            </div>
+            <div class="win-body">
+                <div style="color: var(--text-dim); margin-bottom: 8px;">C:\OBLITERATOR&gt; <span
+                        style="color: var(--phosphor)">Auto-populated valid keys with INJECT buttons</span></div>
+                <div id="valid-keys-list" style="max-height: 600px; overflow-y: auto;">
+                    <div style="color: var(--text-dim); text-align: center; padding: 40px 0;">
+                        [ SCANNING FOR VALID KEYS... ]<br><br>
+                        <span style="font-size:16px; color: var(--amber)">🔍 7 engines running</span><br>
+                        <span style="font-size:14px; color: #555;">Valid keys appear here automatically<br>with INJECT&gt;&gt; buttons</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- STATUS BAR -->
     <div class="statusbar">
         <div class="statusbar-section" id="sb-status">■ 7 Engines Running</div>
         <div class="statusbar-section" id="sb-db">DB: harvester.db</div>
@@ -666,12 +690,62 @@
             document.getElementById('sb-time').innerText = new Date().toLocaleTimeString();
         }, 1000);
 
+        // ===== MANUAL KEY CHECKER =====
+        async function checkKeys() {
+            const btn = document.getElementById("checkBtn");
+            const keys = document.getElementById("keysInput").value;
+            const resultsDiv = document.getElementById("results");
+            if (!keys.trim()) return;
+
+            btn.disabled = true;
+            btn.innerText = "[ SCANNING... ]";
+            resultsDiv.innerHTML = "";
+
+            try {
+                const body = new URLSearchParams();
+                body.append("keys", keys);
+                const response = await fetch("/check", { method: "POST", body: body });
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(res => {
+                        const statusClass = res.status.replace(" ", "-");
+                        const card = document.createElement("div");
+                        card.className = `result-card ${statusClass}`;
+
+                        let interactBtnHtml = "";
+                        const supportedShells = ["OpenAI", "Anthropic", "GoogleAI", "Groq", "DeepSeek", "OpenRouter"];
+                        if (statusClass === "VALID" && supportedShells.includes(res.provider)) {
+                            interactBtnHtml = `<button class="btn-retro btn-sm btn-green" onclick="loadTarget('${res.key}', '${res.provider}')">INJECT >></button>`;
+                        }
+
+                        card.innerHTML = `
+                        <div class="row-top">
+                            <span class="provider-tag ${res.provider}">${res.provider}</span>
+                            <span class="status-${statusClass === 'DEAD' ? 'dead' : statusClass === 'VALID' ? 'valid' : 'warn'}">[${res.status}]</span>
+                        </div>
+                        <div class="key-text">${res.key}</div>
+                        <div class="row-top">
+                            <span style="color:var(--text-dim)">► ${res.message}</span>
+                            ${interactBtnHtml}
+                        </div>
+                    `;
+                        resultsDiv.appendChild(card);
+                    });
+                }
+            } catch (e) { alert("Backend Error!"); }
+            finally {
+                btn.disabled = false;
+                btn.innerText = "[ EXECUTE SCAN ]";
+            }
+        }
+
         function loadTarget(key, provider) {
             __activeKey = key;
             __activeProvider = provider;
             document.getElementById("active-info").innerHTML = `C:\\SHELL&gt; Target: <span style="color:var(--phosphor)">${provider}</span> | Key: ${key.substring(0, 10)}...${key.slice(-5)}`;
             const chat = document.getElementById("chat-history");
-            chat.innerHTML = `<div style="text-align:center; color: var(--phosphor); margin: 20px 0;">[ CONNECTED TO ${provider.toUpperCase()} API ]<br>Ready for input_<span class="blink">▌</span></div>`;
+            chat.innerHTML = `<div style="text-align:center; color: var(--phosphor); margin: 20px 0;">[ CONNECTED TO ${provider.toUpperCase()} API ]<br>Type your prompt and hit SEND_<span class="blink">▌</span></div>`;
             document.getElementById("promptInput").disabled = false;
             document.getElementById("sendBtn").disabled = false;
             document.getElementById("promptInput").focus();
@@ -733,30 +807,30 @@
                 const lootRes = await fetch('/api/loot');
                 const allLoot = await lootRes.json();
 
-                // ===== VALID KEYS PANEL (left) =====
+                // ===== VALID KEYS PANEL (right side) =====
                 const validKeys = allLoot.filter(k => k.status !== 'DEAD' && k.status !== 'ERROR');
                 const validDiv = document.getElementById('valid-keys-list');
                 if (validKeys.length > 0) {
                     validDiv.innerHTML = '';
                     validKeys.forEach(row => {
-                        let displayKey = row.api_key.length > 40 ? row.api_key.substring(0, 18) + '...' + row.api_key.slice(-8) : row.api_key;
+                        let displayKey = row.api_key.length > 35 ? row.api_key.substring(0, 15) + '...' + row.api_key.slice(-6) : row.api_key;
                         let statusColor = row.status === 'VALID' ? 'var(--phosphor)' : 'var(--amber)';
                         let statusIcon = row.status === 'VALID' ? '✅' : '⚠️';
                         validDiv.innerHTML += `
-                        <div style="background:#0a1a0a; border:1px solid #1a4a1a; padding:8px 10px; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-                            <div>
-                                <span class="provider-tag ${row.provider}">${row.provider}</span>
-                                <span style="color:${statusColor}; margin-left:8px;">${statusIcon} ${row.status}</span>
-                                <span style="color:#888; margin-left:8px; font-size:14px;">${row.message}</span>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span style="color:#aaa; font-size:14px; cursor:pointer;" title="${escapeHTML(row.api_key)}" onclick="navigator.clipboard.writeText('${row.api_key}')">${escapeHTML(displayKey)}</span>
+                        <div style="background:#0a1a0a; border:1px solid #1a4a1a; padding:10px 12px; margin-bottom:6px; border-radius:2px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                                <div>
+                                    <span class="provider-tag ${row.provider}">${row.provider}</span>
+                                    <span style="color:${statusColor}; margin-left:6px;">${statusIcon} ${row.status}</span>
+                                </div>
                                 <button class="btn-retro btn-sm btn-green" onclick="loadTarget('${row.api_key}', '${row.provider}')">INJECT&gt;&gt;</button>
                             </div>
+                            <div style="color:#aaa; font-size:14px; margin-top:4px; cursor:pointer;" title="${escapeHTML(row.api_key)}" onclick="navigator.clipboard.writeText('${row.api_key}')">${escapeHTML(displayKey)}</div>
+                            <div style="color:#555; font-size:13px; margin-top:2px;">${row.message || ''}</div>
                         </div>`;
                     });
                 } else {
-                    validDiv.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 30px 0;">[ NO VALID KEYS YET ]<br><span style="font-size:14px; color: var(--amber)">7 engines scanning... valid keys appear here automatically</span></div>';
+                    validDiv.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 40px 0;">[ NO VALID KEYS YET ]<br><br><span style="font-size:16px; color: var(--amber)">🔍 7 engines scanning</span><br><span style="font-size:14px; color: #555;">Valid keys appear here automatically<br>with INJECT&gt;&gt; buttons</span></div>';
                 }
 
                 // ===== ALL KEYS TABLE =====
@@ -809,8 +883,8 @@
 
         // ===== LAYER 1: VISIBLE AUTHOR BADGE =====
         (function () {
-            const _0x = atob('aS1hbS1wYXJhZG94'); // "i-am-paradox"
-            const _0g = atob('aHR0cHM6Ly9naXRodWIuY29tL2ktYW0tcGFyYWRveA=='); // github URL
+            const _0x = atob('aS1hbS1wYXJhZG94');
+            const _0g = atob('aHR0cHM6Ly9naXRodWIuY29tL2ktYW0tcGFyYWRveA==');
 
             function _createBadge() {
                 if (document.getElementById('_watermark_badge')) return;
@@ -821,12 +895,9 @@
                 document.body.appendChild(d);
             }
 
-            // ===== LAYER 2: SELF-HEALING ANTI-TAMPER =====
             _createBadge();
-            // Re-check every 3 seconds
             setInterval(_createBadge, 3000);
 
-            // MutationObserver: if anyone removes the badge from DOM, recreate it
             const observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (mutation) {
                     mutation.removedNodes.forEach(function (node) {
@@ -838,22 +909,20 @@
             });
             observer.observe(document.body, { childList: true, subtree: true });
 
-            // ===== LAYER 4: CONSOLE BRANDING =====
             console.log('%c ☠ API CHECKER v1.0 ☠ ', 'background:#000;color:#33ff33;font-size:20px;font-weight:bold;padding:10px 20px;');
             console.log('%c Created by: ' + _0x, 'color:#ffb000;font-size:14px;font-weight:bold;');
             console.log('%c ' + _0g, 'color:#888;font-size:11px;');
             console.log('%c Removing watermarks violates the MIT license attribution clause.', 'color:#ff3333;font-size:11px;');
 
-            // Hidden: inject author into page title
             const _origTitle = document.title;
             document.title = _origTitle + ' | by ' + _0x;
 
-            // Fetch author from backend for double-verification
             fetch('/api/author').then(r => r.json()).then(d => {
                 if (d.author) window.__author = d.author;
             }).catch(() => { });
         })();
     </script>
+
 </body>
 
 </html>

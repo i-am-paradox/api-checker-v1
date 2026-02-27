@@ -543,58 +543,49 @@
         </div>
     </div>
 
-    <div class="grid-2col">
-        <!-- LEFT: VALID KEYS PANEL -->
-        <div class="win-frame">
-            <div class="win-titlebar">
-                <span>💎 valid_keys.db — LIVE CAPTURES</span>
-                <div class="win-btns">
-                    <div class="win-btn">_</div>
-                    <div class="win-btn">□</div>
-                    <div class="win-btn">×</div>
-                </div>
-            </div>
-            <div class="win-body">
-                <div style="color: var(--text-dim); margin-bottom: 8px;">C:\OBLITERATOR&gt; <span
-                        style="color: var(--phosphor)">Valid / Working keys appear here automatically</span></div>
-                <div id="valid-keys-list" style="max-height: 280px; overflow-y: auto;">
-                    <div style="color: var(--text-dim); text-align: center; padding: 30px 0;">
-                        [ SCANNING FOR VALID KEYS... ]<br>
-                        <span style="font-size:14px; color: var(--amber)">7 engines running in parallel</span>
-                    </div>
-                </div>
-                <div style="margin-top: 8px; color: var(--text-dim); font-size: 14px;">
-                    <span class="blink" style="color: var(--phosphor);">●</span> Click <span
-                        style="color: var(--amber)">INJECT&gt;&gt;</span> to load key into prompt shell
-                </div>
+    <div class="win-frame">
+        <div class="win-titlebar">
+            <span>💎 valid_keys.db — VALID / WORKING KEYS</span>
+            <div class="win-btns">
+                <div class="win-btn">_</div>
+                <div class="win-btn">□</div>
+                <div class="win-btn">×</div>
             </div>
         </div>
-
-        <!-- RIGHT: LIVE SHELL -->
-        <div class="win-frame">
-            <div class="win-titlebar">
-                <span>prompt_shell.exe</span>
-                <div class="win-btns">
-                    <div class="win-btn">_</div>
-                    <div class="win-btn">□</div>
-                    <div class="win-btn">×</div>
-                </div>
-            </div>
-            <div class="win-body">
-                <div style="color: var(--text-dim); margin-bottom: 6px;" id="active-info">C:\SHELL&gt; <span
-                        style="color:var(--amber)">Load a VALID key to interact_</span></div>
-                <div id="chat-history">
-                    <div style="color: var(--text-dim); text-align: center; margin: auto;">[ AWAITING VALID CREDENTIALS
-                        ]</div>
-                </div>
-                <div class="chat-tools">
-                    <input type="text" id="promptInput" placeholder="Enter prompt..." disabled
-                        onkeypress="handleEnter(event)">
-                    <button class="btn-retro btn-green" id="sendBtn" onclick="sendPrompt()" disabled>SEND>></button>
+        <div class="win-body" style="padding: 8px 12px;">
+            <div id="valid-keys-list">
+                <div style="color: var(--text-dim); text-align: center; padding: 15px 0;">
+                    <span class="blink" style="color: var(--phosphor);">●</span> Scanning... valid keys appear here
+                    with <span style="color: var(--amber)">INJECT&gt;&gt;</span> buttons
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="win-frame">
+        <div class="win-titlebar">
+            <span>prompt_shell.exe — AI Interaction</span>
+            <div class="win-btns">
+                <div class="win-btn">_</div>
+                <div class="win-btn">□</div>
+                <div class="win-btn">×</div>
+            </div>
+        </div>
+        <div class="win-body">
+            <div style="color: var(--text-dim); margin-bottom: 6px;" id="active-info">C:\SHELL&gt; <span
+                    style="color:var(--amber)">Click INJECT on a valid key above to start_</span></div>
+            <div id="chat-history" style="min-height: 80px;">
+                <div style="color: var(--text-dim); text-align: center; padding: 20px 0;">[ AWAITING VALID KEY ]
+                </div>
+            </div>
+            <div class="chat-tools">
+                <input type="text" id="promptInput" placeholder="Type your prompt here..." disabled
+                    onkeypress="handleEnter(event)">
+                <button class="btn-retro btn-green" id="sendBtn" onclick="sendPrompt()" disabled>SEND&gt;&gt;</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- SYSTEM MATRIX TERMINAL -->
     <div class="win-frame">
@@ -643,7 +634,8 @@
                     </thead>
                     <tbody id="loot-body">
                         <tr>
-                            <td colspan="4" style="text-align:center; color:var(--text-dim)">Initializing database
+                            <td colspan="4" style="text-align:center; color:var(--text-dim)">Initializing
+                                database
                                 sync...</td>
                         </tr>
                     </tbody>
@@ -741,7 +733,7 @@
                 const lootRes = await fetch('/api/loot');
                 const allLoot = await lootRes.json();
 
-                // ===== VALID KEYS PANEL =====
+                // ===== VALID KEYS PANEL (left) =====
                 const validKeys = allLoot.filter(k => k.status !== 'DEAD' && k.status !== 'ERROR');
                 const validDiv = document.getElementById('valid-keys-list');
                 if (validKeys.length > 0) {

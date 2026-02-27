@@ -4,7 +4,7 @@
 
 <br/>
 
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=16&duration=2000&pause=500&color=FFB000&center=true&vCenter=true&width=600&height=30&lines=OSINT+Scanner+%7C+Proxy+Exploit+%7C+Live+Dashboard+%7C+Telegram+Alerts" alt="Features" />
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=16&duration=2000&pause=500&color=FFB000&center=true&vCenter=true&width=700&height=30&lines=7+Engines+%7C+GitHub+Search+%7C+OSINT+%7C+GitLab+%7C+Gists+%7C+Pastebin+%7C+Telegram+Alerts" alt="Features" />
 
 <br/><br/>
 
@@ -20,9 +20,9 @@
 ║                                                              ║
 ║   ☠  A U T O N O M O U S   K E Y   H A R V E S T E R  ☠   ║
 ║                                                              ║
-║   High-Performance Rust Binary • Zero Dependencies on Py     ║
-║   OSINT Scraping • Proxy Rotation • API Validation           ║
-║   Live Web Dashboard • Telegram Notifications                ║
+║   High-Performance Rust Binary • Zero Python Dependencies   ║
+║   7 Parallel Scanning Engines • Multi-Source Harvesting      ║
+║   Live Dashboard • AI Prompt Shell • Telegram Alerts         ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
@@ -33,11 +33,11 @@
 
 ## ⚡ What Is This?
 
-**API Checker v1.0** is a high-performance, autonomous API key discovery and validation engine built entirely in **Rust**. It combines OSINT scraping, proxy-based rate-limit exploitation, and real-time API validation into a single native binary.
+**API Checker v1.0** is a high-performance, autonomous API key discovery and validation engine built entirely in **Rust**. It runs **7 parallel scanning engines** across multiple sources — GitHub Code Search, GitHub Events, GitHub Gists, GitLab, Pastebin, OSINT (grep.app), and proxy-based exploitation.
 
-> 🔥 **One binary. Zero Python. Maximum performance.**
+> 🔥 **One binary. Zero Python. 7 engines. Maximum performance.**
 
-The system continuously scans public code repositories for leaked API keys, validates them against provider APIs, stores results in a local SQLite database, and sends instant Telegram alerts when valid keys are found — all while serving a retro-styled live dashboard.
+The system continuously scans public code repositories for leaked API keys, validates them against provider APIs, stores results in SQLite, and sends instant Telegram alerts — all served through a retro-styled Command Center with a built-in AI prompt shell for interacting with discovered keys.
 
 ---
 
@@ -47,32 +47,37 @@ The system continuously scans public code repositories for leaked API keys, vali
 <tr>
 <td>
 
-### 🔍 OSINT Engine
-- Scans `grep.app` for leaked API keys
-- 7 search query patterns with page rotation
-- HTML tag stripping for clean extraction
-- Regex-based key detection (OpenAI, Anthropic, Google AI, HuggingFace)
+### 🔍 7 Scanning Engines
+- **OSINT Engine** — grep.app scraping with query rotation
+- **GitHub Code Search** — searches code across all public repos
+- **GitHub Events** — monitors live PushEvents
+- **GitHub Gists** — scans public gists
+- **GitLab Events** — monitors public GitLab activity
+- **Pastebin Scanner** — scans paste dumps via psbdmp.ws
+- **Proxy Exploiter** — 600+ rotating proxies
 
 </td>
 <td>
 
-### 🌐 Proxy Exploiter
-- Auto-fetches 600+ free HTTP proxies
-- Rotating proxy pool for rate-limit bypass
-- Stats tracking (success/fail counters)
-- Automatic proxy refresh on exhaustion
+### 🖥️ Command Center UI
+- Retro CRT scanline + Win98 window frames
+- **Manual Scanner** — paste & validate keys
+- **AI Prompt Shell** — chat with valid API keys
+- **Valid Keys Panel** — auto-populated with INJECT buttons
+- **Live Logs** — real-time engine activity
+- **Loot Table** — paginated, click-to-copy keys
 
 </td>
 </tr>
 <tr>
 <td>
 
-### 🖥️ Live Dashboard
-- Retro 90s hacker-style web UI
-- CRT scanlines + Windows 98 window frames
-- Real-time log streaming
-- Paginated loot table with per-key CHECK buttons
-- Click-to-copy API keys
+### 🔑 5 Provider Validations
+- **OpenAI** — `sk-proj-*`, `sk-svcacct-*`, `sk-live-*`
+- **Anthropic** — `sk-ant-api03-*`
+- **Google AI** — `AIzaSy*`
+- **HuggingFace** — `hf_*`
+- Real API calls for validation (not just regex)
 
 </td>
 <td>
@@ -124,11 +129,15 @@ cargo build --release
 
 ### Configuration
 
-Set up Telegram notifications (optional):
+Set environment variables (optional but recommended):
 
 ```bash
+# Telegram alerts (optional)
 export TELEGRAM_BOT_TOKEN="your_bot_token_here"
 export TELEGRAM_CHAT_ID="your_chat_id_here"
+
+# GitHub Code Search engine (optional — enables the most powerful engine)
+export GITHUB_TOKEN="your_github_pat_here"
 ```
 
 ### Run
@@ -146,34 +155,27 @@ http://localhost:5050
 
 ---
 
-## 📸 Dashboard Preview
+## 📸 Dashboard Layout
 
 ```
-╔══════════════════════════════════════════════════════════════╗
-║  ☠ OBLITERATOR ☠                                            ║
-║  ══╡ COMMAND CENTER v1.0 ╞══                                ║
-╠══════════════════════════════════════════════════════════════╣
-║                                                              ║
-║  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐            ║
-║  │ KEYS: 82    │ │ LIVING: 0   │ │ ► ACTIVE    │            ║
-║  └─────────────┘ └─────────────┘ └─────────────┘            ║
-║                                                              ║
-║  ┌──────────────────────────────────────────────────────┐    ║
-║  │ [mass_scanner.exe]                        [_ □ ×]    │    ║
-║  │ C:\> Paste API keys for validation...                │    ║
-║  │ > sk-proj-xxx...                                     │    ║
-║  │ > AIzaSy...                                          │    ║
-║  │                              [ EXECUTE SCAN ]        │    ║
-║  └──────────────────────────────────────────────────────┘    ║
-║                                                              ║
-║  ┌──────────────────────────────────────────────────────┐    ║
-║  │ [system_matrix.log]                       [_ □ ×]    │    ║
-║  │ [*] OSINT SWEEP #42: Querying 'sk-proj-' (page 3)   │    ║
-║  │ [!] OSINT MATCH: OpenAI key found => sk-proj-Xx...   │    ║
-║  │ [~] RUST ENGINE CAUGHT: OpenAI | DEAD | Invalid      │    ║
-║  └──────────────────────────────────────────────────────┘    ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
+┌──────────────────────────────────────────────────────────────┐
+│                  ☠ OBLITERATOR ☠                            │
+│         ══╡ COMMAND CENTER v1.0 ╞══                         │
+│  [ 7 Engines ] · [ GitHub Search ] · [ OSINT ] · [ GitLab ] │
+├─────────────────────────┬────────────────────────────────────┤
+│  mass_scanner.exe       │  prompt_shell.exe                  │
+│  Paste API keys for     │  AI Interaction Shell              │
+│  manual validation      │  Chat with valid keys via          │
+│  [ EXECUTE SCAN ]       │  INJECT >> from valid_keys panel   │
+├─────────────────────────┼────────────────────────────────────┤
+│  system_matrix.log      │  💎 valid_keys.db                  │
+│  7 ENGINES RUNNING      │                                    │
+│  Live engine activity   │  Auto-populated valid keys         │
+├─────────────────────────┤  with INJECT>> buttons             │
+│  harvested_loot.db      │                                    │
+│  ALL KEYS table         │  Click INJECT to load key          │
+│  (paginated, no CHECK)  │  into prompt_shell for chatting    │
+└─────────────────────────┴────────────────────────────────────┘
 ```
 
 ---
@@ -182,15 +184,20 @@ http://localhost:5050
 
 ```mermaid
 graph LR
-    A[OSINT Engine] -->|grep.app API| B[Key Extractor]
-    C[Proxy Engine] -->|unsecuredapikeys| B
-    B -->|Regex Match| D[API Validator]
-    D -->|OpenAI/Anthropic/Google| E{Valid?}
-    E -->|Yes| F[SQLite DB]
-    E -->|Yes| G[Telegram Alert]
-    E -->|No| F
-    F --> H[Web Dashboard :5050]
-    H -->|Live Polling| I[Stats + Loot Table]
+    A[OSINT Engine] -->|grep.app| B[Key Extractor]
+    C[Proxy Engine] --> B
+    D[GitHub Code Search] --> B
+    E[GitHub Events] --> B
+    F[GitHub Gists] --> B
+    G[GitLab Events] --> B
+    H[Pastebin Scanner] --> B
+    B -->|Regex Match| I[API Validator]
+    I -->|OpenAI/Anthropic/Google/HF| J{Valid?}
+    J -->|Yes| K[SQLite DB]
+    J -->|Yes| L[Telegram Alert]
+    J -->|No| K
+    K --> M[Web Dashboard :5050]
+    M -->|Live Polling| N[Stats + Loot + Valid Keys]
 ```
 
 ---
@@ -216,7 +223,7 @@ api-checker-v1/
 
 | Provider | Pattern | Validation |
 |----------|---------|-----------|
-| **OpenAI** | `sk-proj-*`, `sk-live-*` | ✅ `/v1/models` API |
+| **OpenAI** | `sk-proj-*`, `sk-svcacct-*`, `sk-live-*` | ✅ `/v1/models` API |
 | **Anthropic** | `sk-ant-api03-*` | ✅ Messages API |
 | **Google AI** | `AIzaSy*` | ✅ Gemini API |
 | **HuggingFace** | `hf_*` | ✅ Inference API |
@@ -229,10 +236,11 @@ api-checker-v1/
 |----------|--------|-------------|
 | `/` | GET | Serves the Command Center dashboard |
 | `/check` | POST | Manual API key validation |
-| `/test_prompt` | POST | Send prompts via validated keys |
+| `/test_prompt` | POST | Chat with AI using validated keys |
 | `/api/stats` | GET | Get harvested key statistics |
-| `/api/loot` | GET | Get all harvested keys |
+| `/api/loot` | GET | Get all harvested keys (JSON) |
 | `/api/logs` | GET | Stream live engine logs |
+| `/api/author` | GET | Author & license info |
 
 ---
 

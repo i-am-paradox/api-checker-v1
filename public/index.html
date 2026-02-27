@@ -579,12 +579,14 @@
                 <div style="color: var(--text-dim); margin-bottom: 6px;" id="active-info">C:\SHELL&gt; <span
                         style="color:var(--amber)">Click INJECT on a valid key to start chatting_</span></div>
                 <div id="chat-history">
-                    <div style="color: var(--text-dim); text-align: center; margin: auto;">[ AWAITING VALID CREDENTIALS ]</div>
+                    <div style="color: var(--text-dim); text-align: center; margin: auto;">[ AWAITING VALID CREDENTIALS
+                        ]</div>
                 </div>
                 <div class="chat-tools">
                     <input type="text" id="promptInput" placeholder="Type your prompt here..." disabled
                         onkeypress="handleEnter(event)">
-                    <button class="btn-retro btn-green" id="sendBtn" onclick="sendPrompt()" disabled>SEND&gt;&gt;</button>
+                    <button class="btn-retro btn-green" id="sendBtn" onclick="sendPrompt()"
+                        disabled>SEND&gt;&gt;</button>
                 </div>
             </div>
         </div>
@@ -637,7 +639,8 @@
                             </thead>
                             <tbody id="loot-body">
                                 <tr>
-                                    <td colspan="4" style="text-align:center; color:var(--text-dim)">Initializing database sync...</td>
+                                    <td colspan="4" style="text-align:center; color:var(--text-dim)">Initializing
+                                        database sync...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -646,7 +649,7 @@
             </div>
         </div>
 
-        <div class="win-frame" style="position: sticky; top: 10px;">
+        <div class="win-frame">
             <div class="win-titlebar">
                 <span>💎 valid_keys.db — VALID / WORKING KEYS</span>
                 <div class="win-btns">
@@ -655,14 +658,14 @@
                     <div class="win-btn">×</div>
                 </div>
             </div>
-            <div class="win-body">
-                <div style="color: var(--text-dim); margin-bottom: 8px;">C:\OBLITERATOR&gt; <span
+            <div class="win-body" style="padding: 8px 12px;">
+                <div style="color: var(--text-dim); margin-bottom: 6px;">C:\OBLITERATOR&gt; <span
                         style="color: var(--phosphor)">Auto-populated valid keys with INJECT buttons</span></div>
-                <div id="valid-keys-list" style="max-height: 600px; overflow-y: auto;">
-                    <div style="color: var(--text-dim); text-align: center; padding: 40px 0;">
-                        [ SCANNING FOR VALID KEYS... ]<br><br>
-                        <span style="font-size:16px; color: var(--amber)">🔍 7 engines running</span><br>
-                        <span style="font-size:14px; color: #555;">Valid keys appear here automatically<br>with INJECT&gt;&gt; buttons</span>
+                <div id="valid-keys-list" style="min-height: 120px; max-height: 400px; overflow-y: auto;">
+                    <div style="color: var(--text-dim); text-align: center; padding: 25px 0;">
+                        [ NO VALID KEYS YET ]<br>
+                        <span style="font-size:14px; color: var(--amber)">🔍 7 engines scanning</span><br>
+                        <span style="font-size:13px; color: #555;">INJECT&gt;&gt; buttons appear with valid keys</span>
                     </div>
                 </div>
             </div>

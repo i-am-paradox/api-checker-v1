@@ -877,6 +877,7 @@ async fn main() {
         client: Client::builder().user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36").timeout(Duration::from_secs(10)).build().unwrap(),
         patterns: vec![
             RegexPattern { provider: "OpenAI", pattern: Regex::new(r"(sk-proj-[A-Za-z0-9_-]{32,})").unwrap() },
+            RegexPattern { provider: "OpenAI", pattern: Regex::new(r"(sk-svcacct-[A-Za-z0-9_-]{32,})").unwrap() },
             RegexPattern { provider: "Anthropic", pattern: Regex::new(r"(sk-ant-api03-[a-zA-Z0-9\-_]{80,})").unwrap() },
             RegexPattern { provider: "GoogleAI", pattern: Regex::new(r"(AIzaSy[A-Za-z0-9\-_]{33})").unwrap() },
             RegexPattern { provider: "HuggingFace", pattern: Regex::new(r"(hf_[a-zA-Z]{34})").unwrap() },
